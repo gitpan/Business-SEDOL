@@ -21,14 +21,22 @@ Business::SEDOL - Verify Stock Exchange Daily Official List Numbers
 
 This module verifies SEDOLs, which are British securities identification
 codes. This module cannot tell if a SEDOL references a real security, but it
-can tell you if the given SEDOL is properly formatted.
+can tell you if the given SEDOL is properly formatted. It handles both the
+old-style SEDOLs (SEDOLs issued prior to 26 January 2004) and new-style SEDOLs.
 
 =cut
 
 use strict;
 use vars qw($VERSION $ERROR);
 
-$VERSION = '1.02';
+$VERSION = '2.00';
+
+# Global variables used by many.
+# SEDOLs can basically be comprised of 0..9 and B..Z excluding vowels.
+my %valid_chars = map {$_ => $a++} 0..9, 'A'..'Z';
+delete @valid_chars{qw/A E I O U/};
+my $valid_alpha = join('',grep /\w/, sort keys %valid_chars);
+my @weights = (1, 3, 1, 7, 3, 9, 1);
 
 =head1 METHODS
 
@@ -67,6 +75,38 @@ sub series {
   return substr($self->sedol, 0, 1);
 }
 
+sub _check_format {
+  my $val = shift;
+
+  $ERROR = undef;
+
+  if (length($val) != 7) {
+    $ERROR = "SEDOLs must be 7 characters long.";
+    return '';
+  }
+
+  if ($val =~ /^\d/) {
+    # assume old-style
+    if ($val =~ /\D/) {
+      $ERROR = "Old-style SEDOLs must contain only numerals.";
+      return '';
+    }
+  } else {
+    # assume new-style
+    if ($val !~ /^[$valid_alpha]/o) {
+      $ERROR = "New-style SEDOL must have alphabetic first character.";
+      return '';
+    } elsif ($val !~ /^.[\d$valid_alpha]{5}/o) {
+      $ERROR = "New-style SEDOL must have alphanumeric characters 2-6.";
+      return '';
+    } elsif ($val =~ /\D$/) {
+      $ERROR = "SEDOL checkdigit (character 7) must be numeric.";
+      return '';
+    }
+  }
+  return 1;
+}
+
 =item is_valid()
 
 Returns true if the checksum of the SEDOL is correct otherwise it returns
@@ -77,17 +117,7 @@ sub is_valid {
   my $self = shift;
   my $val = $self->sedol;
 
-  $ERROR = undef;
-
-  if (length($val) != 7) {
-    $ERROR = "SEDOLs must be 7 characters long.";
-    return '';
-  }
-
-  if ($val =~ /\D/) {
-    $ERROR = "SEDOLs must contain only numerals.";
-    return '';
-  }
+  return '' unless _check_format($val);
 
   my $c = $self->check_digit;
   if (substr($self->sedol, -1, 1) eq $c) {
@@ -112,22 +142,19 @@ sub error {
 =item check_digit()
 
 This method returns the checksum of the object. This method ignores the check
-digit of the object's SEDOL number. This method recalculates the check_digit
-each time. If the check digit cannot be calculated, undef is returned and
+digit of the object's SEDOL number instead recalculating the check_digit each
+time. If the check digit cannot be calculated, undef is returned and
 $Business::SEDOL::ERROR contains the reason.
 
 =cut
 sub check_digit {
   my $self = shift;
-  if ($self->sedol =~ /(\D)/) {
-    $ERROR = "Invalid character, '$1', in check_digit calculation.";
-    return;
-  }
-  my @weights = (1, 3, 1, 7, 3, 9, 1);
+  return unless _check_format($self->sedol);
+
   my @val = split //, $self->sedol;
   my $sum = 0;
   for (0..5) {
-    $sum += $val[$_] * $weights[$_];
+    $sum += $valid_chars{$val[$_]} * $weights[$_];
   }
   return (10 - $sum % 10) % 10;
 }
