@@ -29,7 +29,7 @@ old-style SEDOLs (SEDOLs issued prior to 26 January 2004) and new-style SEDOLs.
 use strict;
 use vars qw($VERSION $ERROR);
 
-$VERSION = '2.00';
+$VERSION = '2.01';
 
 # Global variables used by many.
 # SEDOLs can basically be comprised of 0..9 and B..Z excluding vowels.
@@ -149,7 +149,9 @@ $Business::SEDOL::ERROR contains the reason.
 =cut
 sub check_digit {
   my $self = shift;
-  return unless _check_format($self->sedol);
+  my $sedol = $self->sedol;
+  $sedol .= "0" if length($sedol) == 6;
+  return unless _check_format($sedol);
 
   my @val = split //, $self->sedol;
   my $sum = 0;
