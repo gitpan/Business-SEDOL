@@ -31,9 +31,9 @@ foreach (qw/O123457 012.453 010T000 2!71001 30201e5 4-68631 548g182/) {
 foreach (qw/3020134 4668630 5484189 6597458 7060859/) {
   my $sdl = Business::SEDOL->new($_);
   ok($sdl->is_valid, '', "  Expected an error, but SEDOL $_ seems to be valid.");
-  ok($Business::SEDOL::ERROR, qr/^Check digit not correct/,
+  ok($Business::SEDOL::ERROR, qr/^Check digit (?:in|not )correct/,
      "  Got an unexpected error: $Business::SEDOL::ERROR.");
-  ok($sdl->error, qr/^Check digit not correct/,
+  ok($sdl->error, qr/^Check digit (?:in|not )correct/,
      "  Got an unexpected error: ".$sdl->error);
 }
 

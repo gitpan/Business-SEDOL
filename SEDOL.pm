@@ -28,7 +28,7 @@ can tell you if the given SEDOL is properly formatted.
 use strict;
 use vars qw($VERSION $ERROR);
 
-$VERSION = '1.01';
+$VERSION = '1.02';
 
 =head1 METHODS
 
