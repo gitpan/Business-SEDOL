@@ -28,7 +28,7 @@ can tell you if the given SEDOL is properly formatted.
 use strict;
 use vars qw($VERSION $ERROR);
 
-$VERSION = '1.00';
+$VERSION = '1.01';
 
 =head1 METHODS
 
@@ -77,6 +77,8 @@ sub is_valid {
   my $self = shift;
   my $val = $self->sedol;
 
+  $ERROR = undef;
+
   if (length($val) != 7) {
     $ERROR = "SEDOLs must be 7 characters long.";
     return '';
@@ -103,8 +105,8 @@ not valid. Otherwise returns undef.
 
 =cut
 sub error {
-  my $self = shift;
-  return $ERROR unless $self->is_valid;
+  shift->is_valid;
+  return $ERROR;
 }
 
 =item check_digit()
