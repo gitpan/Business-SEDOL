@@ -15,7 +15,7 @@ Business::SEDOL - Verify Stock Exchange Daily Official List Numbers
   $sdl = Business::SEDOL->new('0123457');
   $chk = $sdl->check_digit;
   $sdl->sedol($sdl->sedol.$chk);
-  print $sdl->is_valid ? "Looks good." : "Invalid: ", $Business::SEDOL::ERROR, "\n";
+  print $sdl->is_valid ? "Looks good." : "Invalid: ", $sdl->error, "\n";
 
 =head1 DESCRIPTION
 
@@ -28,7 +28,7 @@ can tell you if the given SEDOL is properly formatted.
 use strict;
 use vars qw($VERSION $ERROR);
 
-$VERSION = '0.01';
+$VERSION = '1.00';
 
 =head1 METHODS
 
@@ -94,6 +94,17 @@ sub is_valid {
     $ERROR = "Check digit not correct. Expected $c.";
     return '';
   }
+}
+
+=item error()
+
+If the SEDOL object is not valid (! is_valid()) it returns the reason it is 
+not valid. Otherwise returns undef.
+
+=cut
+sub error {
+  my $self = shift;
+  return $ERROR unless $self->is_valid;
 }
 
 =item check_digit()
